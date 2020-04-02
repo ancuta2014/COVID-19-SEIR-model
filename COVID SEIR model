@@ -1,0 +1,36 @@
+function dx = New_Paltz_age_model_04_01(x,b,Q)
+
+dx=zeros(5,4);
+N = sum(x(:));
+
+%Average incubation period = 6 days.
+d_max = 1/6;
+%Age-specific fraction of exposed people who develop symptoms (become
+%infected)
+d = [0.7*d_max 0.8*d_max 0.9*d_max d_max];
+%Age-specific raction of exposed individuals who never become symptomatic
+%(return to the susceptible compartment)
+d_skip = d_max*ones(4,1) - d;
+
+%Average infectious period = 5 days.
+g_max = 1/5;
+%Age-specific fraction of infected individuals who recovered. 
+g1 = [0.99*g_max 0.90*g_max 0.60*g_max 0.40*g_max];
+%Age-specific fraction of infected individuals who died. 
+g2 = g_max*ones(1,4)-g1;
+%Average immunity window = 60 days.
+g = 1/60;
+
+%SE = number of all exposed individuals (of all ages) at location 
+SE = sum(x(2,:),2);
+%SI = number of all infected individuals (of all ages) at location
+SI = sum(x(3,:),2);
+
+    for age = 1:4
+        dx(1,age) = -b(age)*x(1,age)*(SI+Q*SE)/max(N,1) + g*x(4,age) + d_skip(age)*x(2,age);    
+        dx(2,age) = b(age)*x(1,age)*(SI+Q*SE)/max(N,1) - d(age)*x(2,age);
+        dx(3,age) = (d(age)-d_skip(age))*x(2,age)-(g1(age)+g2(age))*x(3,age);   
+        dx(4,age) = g1(age)*x(3,age) - g*x(4,age);
+        dx(5,age) = g2(age)*x(3,age);
+        
+    end
